@@ -1,4 +1,4 @@
-# AI Skill Graph - Project Documentation
+# Data Sci Scout - Project Documentation
 
 ## Overview
 A web application that analyzes and visualizes the AI and Data Science job market. Combines a relational database (PostgreSQL) for structured job postings with an in-memory graph database (fallback when Neo4j is not configured) for modeling skill relationships.
@@ -58,7 +58,7 @@ A web application that analyzes and visualizes the AI and Data Science job marke
 - `NEO4J_PASSWORD` - Neo4j password (optional)
 
 ## Running the Application
-The application runs on port 5000 using gunicorn:
+The application runs on port 5050 using gunicorn:
 ```bash
-gunicorn --bind 0.0.0.0:5000 --reuse-port --reload main:app
+gunicorn --bind 0.0.0.0:5050 --reuse-port --reload main:app
 ```
