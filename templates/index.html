@@ -1,0 +1,287 @@
+{% extends "base.html" %}
+
+{% block title %}AI Skill Graph - Dashboard{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="page-title">Data Science Job Market Dashboard</h1>
+            <form action="{{ url_for('init_data') }}" method="post" class="d-inline">
+                <button type="submit" class="btn btn-outline-primary" onclick="return confirm('This will reset all data with sample jobs. Continue?')">
+                    <i data-feather="refresh-cw" class="icon-sm me-1"></i> Load Sample Data
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-md-6 col-lg-3">
+        <div class="stat-card">
+            <div class="stat-icon bg-primary-light">
+                <i data-feather="briefcase"></i>
+            </div>
+            <div class="stat-value">{{ total_jobs }}</div>
+            <div class="stat-label">Total Jobs</div>
+        </div>
+    </div>
+    <div class="col-md-6 col-lg-3">
+        <div class="stat-card">
+            <div class="stat-icon bg-success-light">
+                <i data-feather="dollar-sign"></i>
+            </div>
+            <div class="stat-value">${{ "{:,}".format(avg_salary) }}</div>
+            <div class="stat-label">Avg Salary</div>
+        </div>
+    </div>
+    <div class="col-md-6 col-lg-3">
+        <div class="stat-card">
+            <div class="stat-icon bg-info-light">
+                <i data-feather="code"></i>
+            </div>
+            <div class="stat-value">{{ total_skills }}</div>
+            <div class="stat-label">Tracked Skills</div>
+        </div>
+    </div>
+    <div class="col-md-6 col-lg-3">
+        <div class="stat-card">
+            <div class="stat-icon bg-warning-light">
+                <i data-feather="trending-up"></i>
+            </div>
+            <div class="stat-value">{{ industries|length }}</div>
+            <div class="stat-label">Industries</div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-3 mb-4">
+        <div class="filter-panel">
+            <h5 class="filter-title">
+                <i data-feather="filter" class="icon-sm me-2"></i>Filters
+            </h5>
+            <form action="{{ url_for('index') }}" method="get">
+                {% if search %}
+                <input type="hidden" name="search" value="{{ search }}">
+                {% endif %}
+                
+                <div class="mb-3">
+                    <label class="form-label">Industry</label>
+                    <select name="industry" class="form-select">
+                        <option value="">All Industries</option>
+                        {% for ind in industries %}
+                        <option value="{{ ind }}" {{ 'selected' if selected_industry == ind else '' }}>{{ ind }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">Location</label>
+                    <select name="location" class="form-select">
+                        <option value="">All Locations</option>
+                        {% for loc in locations %}
+                        <option value="{{ loc }}" {{ 'selected' if selected_location == loc else '' }}>{{ loc }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">Experience Level</label>
+                    <select name="experience" class="form-select">
+                        <option value="">All Levels</option>
+                        <option value="EN" {{ 'selected' if selected_experience == 'EN' else '' }}>Entry Level</option>
+                        <option value="MI" {{ 'selected' if selected_experience == 'MI' else '' }}>Mid Level</option>
+                        <option value="SE" {{ 'selected' if selected_experience == 'SE' else '' }}>Senior</option>
+                        <option value="EX" {{ 'selected' if selected_experience == 'EX' else '' }}>Executive</option>
+                    </select>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">Job Category</label>
+                    <select name="job_category" class="form-select">
+                        <option value="">All Categories</option>
+                        {% for cat in categories %}
+                        <option value="{{ cat }}" {{ 'selected' if selected_category == cat else '' }}>{{ cat }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">Salary Range (USD)</label>
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <input type="number" name="salary_min" class="form-control form-control-sm" placeholder="Min" value="{{ selected_salary_min }}" min="0" step="10000">
+                        </div>
+                        <div class="col-6">
+                            <input type="number" name="salary_max" class="form-control form-control-sm" placeholder="Max" value="{{ selected_salary_max }}" min="0" step="10000">
+                        </div>
+                    </div>
+                    <div class="salary-range-display mt-1">
+                        <small class="text-muted">${{ "{:,}".format(min_salary) }} - ${{ "{:,}".format(max_salary) }}</small>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">Remote Work</label>
+                    <select name="remote_ratio" class="form-select">
+                        <option value="">Any</option>
+                        <option value="0" {{ 'selected' if selected_remote_ratio == '0' else '' }}>On-site Only</option>
+                        <option value="50" {{ 'selected' if selected_remote_ratio == '50' else '' }}>Hybrid (50%)</option>
+                        <option value="100" {{ 'selected' if selected_remote_ratio == '100' else '' }}>Fully Remote</option>
+                    </select>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">Company Size</label>
+                    <select name="company_size" class="form-select">
+                        <option value="">All Sizes</option>
+                        <option value="S" {{ 'selected' if selected_company_size == 'S' else '' }}>Small (1-50)</option>
+                        <option value="M" {{ 'selected' if selected_company_size == 'M' else '' }}>Medium (51-250)</option>
+                        <option value="L" {{ 'selected' if selected_company_size == 'L' else '' }}>Large (250+)</option>
+                    </select>
+                </div>
+                
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn btn-primary">Apply Filters</button>
+                    <a href="{{ url_for('index') }}" class="btn btn-outline-secondary">Clear All</a>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <div class="col-lg-9">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i data-feather="list" class="icon-sm me-2"></i>Job Listings
+                </h5>
+                <span class="badge bg-primary">{{ jobs.total }} jobs found</span>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th style="width: 25%">Job Title</th>
+                                <th style="width: 25%">Skills</th>
+                                <th style="width: 12%">Location</th>
+                                <th style="width: 12%">Salary</th>
+                                <th style="width: 10%">Level</th>
+                                <th style="width: 16%">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if jobs.items %}
+                                {% for job in jobs.items %}
+                                <tr>
+                                    <td>
+                                        <a href="{{ url_for('view_job', job_id=job.id) }}" class="job-title-link">
+                                            {{ job.job_title }}
+                                        </a>
+                                        <div class="text-muted small">{{ job.industry }}</div>
+                                    </td>
+                                    <td>
+                                        {% set skills = job.get_skills_list() %}
+                                        {% for skill in skills[:3] %}
+                                        <span class="skill-tag">{{ skill }}</span>
+                                        {% endfor %}
+                                        {% if skills|length > 3 %}
+                                        <span class="skill-tag skill-tag-more">+{{ skills|length - 3 }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ job.company_location }}</td>
+                                    <td>
+                                        {% if job.salary_usd %}
+                                        ${{ "{:,}".format(job.salary_usd) }}
+                                        {% else %}
+                                        <span class="text-muted">N/A</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="badge 
+                                            {% if job.experience_level == 'EN' %}bg-info
+                                            {% elif job.experience_level == 'MI' %}bg-primary
+                                            {% elif job.experience_level == 'SE' %}bg-success
+                                            {% else %}bg-warning{% endif %}">
+                                            {% if job.experience_level == 'EN' %}Entry
+                                            {% elif job.experience_level == 'MI' %}Mid
+                                            {% elif job.experience_level == 'SE' %}Senior
+                                            {% else %}Executive{% endif %}
+                                        </span>
+                                        {% if job.remote_ratio == 100 %}
+                                        <span class="badge bg-success-light text-success ms-1" title="Fully Remote">
+                                            <i data-feather="wifi" class="icon-xs"></i>
+                                        </span>
+                                        {% elif job.remote_ratio == 50 %}
+                                        <span class="badge bg-info-light text-info ms-1" title="Hybrid">
+                                            <i data-feather="home" class="icon-xs"></i>
+                                        </span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="{{ url_for('view_job', job_id=job.id) }}" class="btn btn-outline-primary" title="View">
+                                                <i data-feather="eye" class="icon-xs"></i>
+                                            </a>
+                                            <a href="{{ url_for('edit_job', job_id=job.id) }}" class="btn btn-outline-secondary" title="Edit">
+                                                <i data-feather="edit-2" class="icon-xs"></i>
+                                            </a>
+                                            <form action="{{ url_for('delete_job', job_id=job.id) }}" method="post" class="d-inline" onsubmit="return confirm('Delete this job?')">
+                                                <button type="submit" class="btn btn-outline-danger" title="Delete">
+                                                    <i data-feather="trash-2" class="icon-xs"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            {% else %}
+                            <tr>
+                                <td colspan="6" class="text-center py-5">
+                                    <div class="text-muted">
+                                        <i data-feather="inbox" style="width: 48px; height: 48px;"></i>
+                                        <p class="mt-3 mb-2">No jobs found</p>
+                                        <p class="small">Click "Load Sample Data" to populate the database with AI job listings</p>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            {% if jobs.pages > 1 %}
+            <div class="card-footer">
+                <nav>
+                    <ul class="pagination mb-0 justify-content-center">
+                        {% if jobs.has_prev %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('index', page=jobs.prev_num, industry=selected_industry, location=selected_location, experience=selected_experience, job_category=selected_category, salary_min=selected_salary_min, salary_max=selected_salary_max, remote_ratio=selected_remote_ratio, company_size=selected_company_size, search=search) }}">Previous</a>
+                        </li>
+                        {% endif %}
+                        
+                        {% for page_num in jobs.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                            {% if page_num %}
+                            <li class="page-item {{ 'active' if page_num == jobs.page else '' }}">
+                                <a class="page-link" href="{{ url_for('index', page=page_num, industry=selected_industry, location=selected_location, experience=selected_experience, job_category=selected_category, salary_min=selected_salary_min, salary_max=selected_salary_max, remote_ratio=selected_remote_ratio, company_size=selected_company_size, search=search) }}">{{ page_num }}</a>
+                            </li>
+                            {% else %}
+                            <li class="page-item disabled"><span class="page-link">...</span></li>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if jobs.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('index', page=jobs.next_num, industry=selected_industry, location=selected_location, experience=selected_experience, job_category=selected_category, salary_min=selected_salary_min, salary_max=selected_salary_max, remote_ratio=selected_remote_ratio, company_size=selected_company_size, search=search) }}">Next</a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

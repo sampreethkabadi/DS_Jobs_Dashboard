@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+
+{% block title %}{{ job.job_title }} - AI Skill Graph{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">{{ job.job_title }}</h5>
+                <div class="btn-group btn-group-sm">
+                    <a href="{{ url_for('edit_job', job_id=job.id) }}" class="btn btn-outline-primary">
+                        <i data-feather="edit-2" class="icon-xs me-1"></i>Edit
+                    </a>
+                    <form action="{{ url_for('delete_job', job_id=job.id) }}" method="post" class="d-inline" onsubmit="return confirm('Delete this job?')">
+                        <button type="submit" class="btn btn-outline-danger">
+                            <i data-feather="trash-2" class="icon-xs me-1"></i>Delete
+                        </button>
+                    </form>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <div class="detail-item">
+                            <span class="detail-label">Job ID</span>
+                            <span class="detail-value font-mono">{{ job.job_id }}</span>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="detail-item">
+                            <span class="detail-label">Category</span>
+                            <span class="detail-value">{{ job.job_category or 'N/A' }}</span>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="detail-item">
+                            <span class="detail-label">Salary</span>
+                            <span class="detail-value">${{ "{:,}".format(job.salary_usd) if job.salary_usd else 'N/A' }}</span>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="detail-item">
+                            <span class="detail-label">Experience Level</span>
+                            <span class="badge 
+                                {% if job.experience_level == 'EN' %}bg-info
+                                {% elif job.experience_level == 'MI' %}bg-primary
+                                {% elif job.experience_level == 'SE' %}bg-success
+                                {% else %}bg-warning{% endif %}">
+                                {% if job.experience_level == 'EN' %}Entry Level
+                                {% elif job.experience_level == 'MI' %}Mid Level
+                                {% elif job.experience_level == 'SE' %}Senior
+                                {% else %}Executive{% endif %}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="detail-item">
+                            <span class="detail-label">Employment Type</span>
+                            <span class="detail-value">
+                                {% if job.employment_type == 'FT' %}Full-time
+                                {% elif job.employment_type == 'PT' %}Part-time
+                                {% elif job.employment_type == 'CT' %}Contract
+                                {% else %}Freelance{% endif %}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="detail-item">
+                            <span class="detail-label">Remote Work</span>
+                            <span class="detail-value">
+                                {% if job.remote_ratio == 0 %}On-site
+                                {% elif job.remote_ratio == 50 %}Hybrid
+                                {% else %}Fully Remote{% endif %}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="detail-item">
+                            <span class="detail-label">Location</span>
+                            <span class="detail-value">{{ job.company_location or 'N/A' }}</span>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="detail-item">
+                            <span class="detail-label">Industry</span>
+                            <span class="detail-value">{{ job.industry or 'N/A' }}</span>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="detail-item">
+                            <span class="detail-label">Company Size</span>
+                            <span class="detail-value">
+                                {% if job.company_size == 'S' %}Small (&lt;50)
+                                {% elif job.company_size == 'M' %}Medium (50-250)
+                                {% else %}Large (&gt;250){% endif %}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="detail-item">
+                            <span class="detail-label">Years Experience</span>
+                            <span class="detail-value">{{ job.years_experience or 'N/A' }} years</span>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="detail-item">
+                            <span class="detail-label">Education Required</span>
+                            <span class="detail-value">{{ job.education_required or 'N/A' }}</span>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="detail-item">
+                            <span class="detail-label">Benefits Score</span>
+                            <span class="detail-value">{{ job.benefits_score or 'N/A' }}/10</span>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="detail-item">
+                            <span class="detail-label">Posted Date</span>
+                            <span class="detail-value">{{ job.posting_date.strftime('%B %d, %Y') if job.posting_date else 'N/A' }}</span>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="detail-item">
+                            <span class="detail-label">Application Deadline</span>
+                            <span class="detail-value">{{ job.application_deadline.strftime('%B %d, %Y') if job.application_deadline else 'N/A' }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i data-feather="code" class="icon-sm me-2"></i>Required Skills
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="d-flex flex-wrap gap-2">
+                    {% for skill in skills %}
+                    <span class="skill-tag skill-tag-lg">{{ skill }}</span>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        
+        {% if related_skills %}
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i data-feather="git-branch" class="icon-sm me-2"></i>Related Skills
+                </h6>
+            </div>
+            <div class="card-body">
+                {% for skill, related in related_skills.items() %}
+                <div class="mb-3">
+                    <div class="fw-medium text-primary mb-2">Skills often paired with {{ skill }}:</div>
+                    <div class="d-flex flex-wrap gap-2">
+                        {% for r in related %}
+                        <span class="skill-tag skill-tag-secondary">{{ r.name }} <small class="opacity-75">({{ r.weight }})</small></span>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="mt-3">
+    <a href="{{ url_for('index') }}" class="btn btn-outline-secondary">
+        <i data-feather="arrow-left" class="icon-sm me-1"></i>Back to Jobs
+    </a>
+</div>
+{% endblock %}

@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+
+{% block title %}DS Skill Graph - Analytics{% endblock %}
+
+{% block extra_css %}
+<style>
+    .viz-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        padding: 24px;
+        height: 100%;
+    }
+    .viz-title {
+        font-size: 18px;
+        font-weight: 600;
+        margin-bottom: 16px;
+        color: #1e293b;
+    }
+    #skill-graph {
+        width: 100%;
+        height: 500px;
+        max-height: 500px;
+        overflow: hidden;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        background: #fafbfc;
+    }
+    .chart-wrapper {
+        position: relative;
+        height: 400px;
+        max-height: 400px;
+        overflow: hidden;
+    }
+    #skill-chart, #salary-chart {
+        width: 100%;
+        height: 100%;
+    }
+    .graph-legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 16px;
+    }
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 13px;
+    }
+    .legend-color {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+    }
+    .node-tooltip {
+        position: absolute;
+        background: rgba(30, 41, 59, 0.95);
+        color: white;
+        padding: 8px 12px;
+        border-radius: 6px;
+        font-size: 13px;
+        pointer-events: none;
+        z-index: 1000;
+    }
+    .filter-controls {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 16px;
+        flex-wrap: wrap;
+    }
+    .filter-controls select {
+        min-width: 150px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1 class="page-title">Charts & Visualizations</h1>
+        <p class="text-muted">Explore AI job market trends, skill relationships, and salary distributions</p>
+        <div class="mb-3">
+            <span class="badge bg-primary-light text-primary me-2">Skill Analysis</span>
+            <span class="badge bg-success-light text-success me-2">Salary Insights</span>
+            <span class="badge bg-warning-light text-warning">Relationship Graph</span>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-12">
+        <div class="viz-card">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div>
+                    <h5 class="viz-title">
+                        <i data-feather="share-2" class="icon-sm me-2"></i>Skill Co-Occurrence Graph
+                    </h5>
+                    <p class="text-muted small mb-0">Interactive visualization showing which AI skills frequently appear together in job postings</p>
+                </div>
+                <button id="reset-graph" class="btn btn-outline-secondary btn-sm">
+                    <i data-feather="refresh-cw" class="icon-xs me-1"></i>Reset View
+                </button>
+            </div>
+            <div id="skill-graph"></div>
+            <div class="graph-legend" id="graph-legend"></div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-6">
+        <div class="viz-card">
+            <h5 class="viz-title">
+                <i data-feather="bar-chart" class="icon-sm me-2"></i>Top Skills by Demand
+            </h5>
+            <div class="filter-controls">
+                <select id="skill-industry-filter" class="form-select form-select-sm">
+                    <option value="">All Industries</option>
+                </select>
+                <select id="skill-experience-filter" class="form-select form-select-sm">
+                    <option value="">All Levels</option>
+                    <option value="EN">Entry Level</option>
+                    <option value="MI">Mid Level</option>
+                    <option value="SE">Senior</option>
+                    <option value="EX">Executive</option>
+                </select>
+            </div>
+            <div class="chart-wrapper">
+                <canvas id="skill-chart"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-6">
+        <div class="viz-card">
+            <h5 class="viz-title">
+                <i data-feather="dollar-sign" class="icon-sm me-2"></i>Salary Distribution
+            </h5>
+            <div class="filter-controls">
+                <select id="salary-group-filter" class="form-select form-select-sm">
+                    <option value="location">By Location</option>
+                    <option value="category">By Job Category</option>
+                </select>
+            </div>
+            <div class="chart-wrapper">
+                <canvas id="salary-chart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="{{ url_for('static', filename='js/visualizations.js') }}"></script>
+{% endblock %}

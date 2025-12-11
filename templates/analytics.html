@@ -1,0 +1,396 @@
+{% extends "base.html" %}
+
+{% block title %}AI Skill Graph - Insights{% endblock %}
+
+{% block extra_css %}
+<style>
+    .viz-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        padding: 24px;
+        height: 100%;
+        margin-bottom: 24px;
+    }
+    .viz-title {
+        font-size: 18px;
+        font-weight: 600;
+        margin-bottom: 16px;
+        color: #1e293b;
+    }
+    .chart-container {
+        position: relative;
+        height: 400px;
+        width: 100%;
+    }
+    .skill-selector {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 16px;
+    }
+    .skill-chip {
+        display: inline-flex;
+        align-items: center;
+        padding: 6px 12px;
+        background: #f1f5f9;
+        border: 1px solid #e2e8f0;
+        border-radius: 100px;
+        font-size: 13px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .skill-chip:hover {
+        background: #e2e8f0;
+    }
+    .skill-chip.selected {
+        background: var(--primary);
+        color: white;
+        border-color: var(--primary);
+    }
+    .skill-chip .remove-btn {
+        margin-left: 6px;
+        opacity: 0.7;
+    }
+    .skill-chip .remove-btn:hover {
+        opacity: 1;
+    }
+    .recommendation-card {
+        padding: 16px;
+        background: #f8fafc;
+        border-radius: 10px;
+        margin-bottom: 12px;
+        transition: all 0.2s;
+    }
+    .recommendation-card:hover {
+        background: #f1f5f9;
+        transform: translateX(4px);
+    }
+    .recommendation-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+    }
+    .recommendation-skill {
+        font-weight: 600;
+        font-size: 15px;
+        color: #1e293b;
+    }
+    .recommendation-score {
+        background: var(--primary);
+        color: white;
+        padding: 4px 10px;
+        border-radius: 100px;
+        font-size: 12px;
+        font-weight: 500;
+    }
+    .recommendation-meta {
+        display: flex;
+        gap: 16px;
+        font-size: 13px;
+        color: #64748b;
+    }
+    .nav-pills .nav-link {
+        color: var(--text-dark);
+        border-radius: 8px;
+        padding: 10px 16px;
+        font-weight: 500;
+    }
+    .nav-pills .nav-link.active {
+        background: var(--primary);
+        color: white;
+    }
+    .user-persona-badge {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 100px;
+        font-size: 11px;
+        font-weight: 500;
+        margin-right: 6px;
+        margin-bottom: 6px;
+    }
+    .persona-student { background: #dbeafe; color: #1d4ed8; }
+    .persona-advisor { background: #dcfce7; color: #16a34a; }
+    .persona-institution { background: #fef3c7; color: #d97706; }
+    .persona-researcher { background: #f3e8ff; color: #9333ea; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1 class="page-title">Career & Skill Insights</h1>
+        <p class="text-muted">Discover in-demand skills, career paths, and market trends for AI/Data Science roles</p>
+        <div class="mb-3">
+            <span class="user-persona-badge persona-student">Students & Job Seekers</span>
+            <span class="user-persona-badge persona-advisor">Career Advisors</span>
+            <span class="user-persona-badge persona-institution">Educational Institutions</span>
+            <span class="user-persona-badge persona-researcher">Researchers</span>
+        </div>
+    </div>
+</div>
+
+<ul class="nav nav-pills mb-4" id="analyticsTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="trends-tab" data-bs-toggle="pill" data-bs-target="#trends" type="button">
+            <i data-feather="trending-up" class="icon-sm me-1"></i> Skill Trends
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="recommender-tab" data-bs-toggle="pill" data-bs-target="#recommender" type="button">
+            <i data-feather="compass" class="icon-sm me-1"></i> Skills Recommender
+        </button>
+    </li>
+</ul>
+
+<div class="tab-content" id="analyticsTabContent">
+    <div class="tab-pane fade show active" id="trends" role="tabpanel">
+        <div class="viz-card">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div>
+                    <h5 class="viz-title">
+                        <i data-feather="trending-up" class="icon-sm me-2"></i>Skill Popularity Over Time
+                    </h5>
+                    <p class="text-muted small mb-0">Track which skills are gaining or losing popularity based on job postings</p>
+                    <div class="mt-2">
+                        <span class="user-persona-badge persona-student">For Job Seekers</span>
+                        <span class="user-persona-badge persona-researcher">For Researchers</span>
+                    </div>
+                </div>
+            </div>
+            <div class="chart-container">
+                <canvas id="trends-chart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="tab-pane fade" id="recommender" role="tabpanel">
+        <div class="row">
+            <div class="col-lg-5">
+                <div class="viz-card">
+                    <h5 class="viz-title">
+                        <i data-feather="check-circle" class="icon-sm me-2"></i>Your Current Skills
+                    </h5>
+                    <p class="text-muted small mb-3">Select skills you already have to get personalized recommendations</p>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Career Goal (Optional)</label>
+                        <select id="career-goal" class="form-select">
+                            <option value="">Any Role</option>
+                            {% for cat in categories %}
+                            <option value="{{ cat }}">{{ cat }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Selected Skills</label>
+                        <div id="selected-skills" class="skill-selector">
+                            <span class="text-muted small">Click skills below to add them</span>
+                        </div>
+                    </div>
+                    
+                    <label class="form-label">Available Skills</label>
+                    <div class="skill-selector" style="max-height: 300px; overflow-y: auto;">
+                        {% for category, skills_list in skills_by_category.items() %}
+                        <div class="w-100 mb-2">
+                            <small class="text-muted fw-bold">{{ category }}</small>
+                        </div>
+                        {% for skill in skills_list %}
+                        <span class="skill-chip" data-skill="{{ skill }}" onclick="toggleSkill(this)">{{ skill }}</span>
+                        {% endfor %}
+                        {% endfor %}
+                    </div>
+                    
+                    <button class="btn btn-primary w-100 mt-3" onclick="getRecommendations()">
+                        <i data-feather="zap" class="icon-sm me-1"></i> Get Recommendations
+                    </button>
+                </div>
+            </div>
+            <div class="col-lg-7">
+                <div class="viz-card">
+                    <h5 class="viz-title">
+                        <i data-feather="compass" class="icon-sm me-2"></i>Recommended Skills to Learn
+                    </h5>
+                    <p class="text-muted small mb-3">Skills that frequently appear alongside your current skills in job postings</p>
+                    <div class="mt-2 mb-3">
+                        <span class="user-persona-badge persona-student">For Students</span>
+                        <span class="user-persona-badge persona-advisor">For Career Advisors</span>
+                        <span class="user-persona-badge persona-institution">For Curriculum Planning</span>
+                    </div>
+                    <div id="recommendations-container">
+                        <div class="text-center py-5 text-muted">
+                            <i data-feather="arrow-left" style="width: 48px; height: 48px;"></i>
+                            <p class="mt-3">Select your current skills and click "Get Recommendations"</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+let trendsChart = null;
+let selectedSkills = [];
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadTrendsChart();
+    feather.replace();
+});
+
+document.querySelectorAll('button[data-bs-toggle="pill"]').forEach(btn => {
+    btn.addEventListener('shown.bs.tab', function() {
+        if (this.id === 'trends-tab' && !trendsChart) loadTrendsChart();
+        feather.replace();
+    });
+});
+
+async function loadTrendsChart() {
+    try {
+        const response = await fetch('/api/skill-trends');
+        const data = await response.json();
+        
+        if (!data.labels || data.labels.length === 0) {
+            document.getElementById('trends-chart').parentElement.innerHTML = '<div class="text-center py-5 text-muted"><p>No trend data available. Load sample data first.</p></div>';
+            return;
+        }
+        
+        const ctx = document.getElementById('trends-chart').getContext('2d');
+        
+        if (trendsChart) trendsChart.destroy();
+        
+        trendsChart = new Chart(ctx, {
+            type: 'line',
+            data: data,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    mode: 'index',
+                    intersect: false
+                },
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            usePointStyle: true,
+                            padding: 20
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(30, 41, 59, 0.95)',
+                        padding: 12,
+                        titleFont: { size: 14, weight: 'bold' },
+                        bodyFont: { size: 13 }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Job Postings'
+                        },
+                        grid: { color: '#e2e8f0' }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Month'
+                        },
+                        grid: { display: false }
+                    }
+                }
+            }
+        });
+    } catch (error) {
+        console.error('Error loading trends:', error);
+    }
+}
+
+function toggleSkill(element) {
+    const skill = element.dataset.skill;
+    
+    if (element.classList.contains('selected')) {
+        element.classList.remove('selected');
+        selectedSkills = selectedSkills.filter(s => s !== skill);
+    } else {
+        element.classList.add('selected');
+        selectedSkills.push(skill);
+    }
+    
+    updateSelectedSkillsDisplay();
+}
+
+function updateSelectedSkillsDisplay() {
+    const container = document.getElementById('selected-skills');
+    
+    if (selectedSkills.length === 0) {
+        container.innerHTML = '<span class="text-muted small">Click skills below to add them</span>';
+        return;
+    }
+    
+    container.innerHTML = selectedSkills.map(skill => 
+        `<span class="skill-chip selected" onclick="removeSkill('${skill}')">${skill} <span class="remove-btn">&times;</span></span>`
+    ).join('');
+}
+
+function removeSkill(skill) {
+    selectedSkills = selectedSkills.filter(s => s !== skill);
+    document.querySelectorAll(`.skill-chip[data-skill="${skill}"]`).forEach(el => {
+        el.classList.remove('selected');
+    });
+    updateSelectedSkillsDisplay();
+}
+
+async function getRecommendations() {
+    if (selectedSkills.length === 0) {
+        alert('Please select at least one skill');
+        return;
+    }
+    
+    const careerGoal = document.getElementById('career-goal').value;
+    const container = document.getElementById('recommendations-container');
+    
+    container.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary" role="status"></div><p class="mt-3 text-muted">Analyzing skill patterns...</p></div>';
+    
+    try {
+        const params = new URLSearchParams({
+            skills: selectedSkills.join(','),
+            career_goal: careerGoal
+        });
+        
+        const response = await fetch(`/api/skill-recommender?${params}`);
+        const data = await response.json();
+        
+        if (!data.recommendations || data.recommendations.length === 0) {
+            container.innerHTML = '<div class="text-center py-5 text-muted"><p>No recommendations found. Try selecting different skills.</p></div>';
+            return;
+        }
+        
+        container.innerHTML = data.recommendations.map((rec, i) => `
+            <div class="recommendation-card">
+                <div class="recommendation-header">
+                    <span class="recommendation-skill">${i + 1}. ${rec.skill}</span>
+                    <span class="recommendation-score">${rec.relevance}% match</span>
+                </div>
+                <div class="recommendation-meta">
+                    <span><i data-feather="tag" class="icon-xs me-1"></i>${rec.category}</span>
+                    <span><i data-feather="briefcase" class="icon-xs me-1"></i>Found in ${rec.frequency} jobs</span>
+                </div>
+            </div>
+        `).join('');
+        
+        feather.replace();
+    } catch (error) {
+        console.error('Error getting recommendations:', error);
+        container.innerHTML = '<div class="text-center py-5 text-muted"><p>Error loading recommendations</p></div>';
+    }
+}
+</script>
+{% endblock %}
