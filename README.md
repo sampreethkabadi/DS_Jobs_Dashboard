@@ -3,6 +3,8 @@
 ## Overview
 A web application that analyzes and visualizes the AI and Data Science job market. Combines a relational database (PostgreSQL) for structured job postings with an in-memory graph database (fallback when Neo4j is not configured) for modeling skill relationships.
 
+![1_dashboard.png](attached_assets/images/1_dashboard.png)
+
 ## Tech Stack
 - **Backend**: Flask (Python)
 - **Database**: PostgreSQL with SQLAlchemy ORM
@@ -62,3 +64,28 @@ The application runs on port 5050 using gunicorn:
 ```bash
 gunicorn --bind 0.0.0.0:5050 --reuse-port --reload main:app
 ```
+## Example Images
+
+### 1. Dashboard
+![1_dashboard.png](attached_assets/images/1_dashboard.png)
+
+### 2. Job Details Page
+![2_job_details.png](attached_assets/images/2_job_details.png)
+
+### 3. Create a Job Page
+![3_create_job.png](attached_assets/images/3_create_job.png)
+
+### 4. Skill Co-occurrence Graph
+![4_skill-occurrence-graph.png](attached_assets/images/4_skill-occurrence-graph.png)
+
+### 5. Skills Frequency Chart
+![5_skill_freq.png](attached_assets/images/5_skill_freq.png)
+
+### 6. Salary Distribution Chart 
+![6_salary_dist.png](attached_assets/images/6_salary_dist.png)
+
+### 7. Skills Trend Chart
+![7_skill_trend.png](attached_assets/images/7_skill_trend.png)
+
+### 8. Skills Recommender Page
+![8_skill_recommender.png](attached_assets/images/8_skill_recommender.png)
